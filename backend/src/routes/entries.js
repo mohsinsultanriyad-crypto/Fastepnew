@@ -1,5 +1,5 @@
 import express from 'express';
-import { z } from 'zod';
+import Joi from 'joi';
 import TimeEntry from '../models/TimeEntry.js';
 import { authRequired } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
@@ -8,7 +8,7 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-const createSchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), startTime: z.string().regex(/^\d{2}:\d{2}$/), endTime: z.string().regex(/^\d{2}:\d{2}$/), breakMinutes: z.number().min(0).max(480).optional(), notes: z.string().max(1000).optional() });
+const createSchema = Joi.object({ date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required(), startTime: Joi.string().pattern(/^\d{2}:\d{2}$/).required(), endTime: Joi.string().pattern(/^\d{2}:\d{2}$/).required(), breakMinutes: Joi.number().min(0).max(480).optional(), notes: Joi.string().max(1000).optional() });
 
 router.post('/', authRequired, validateBody(createSchema), async (req, res) => {
   try {

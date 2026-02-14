@@ -2,7 +2,7 @@ import express from 'express';
 import { authRequired, adminRequired } from '../middleware/auth.js';
 import TimeEntry from '../models/TimeEntry.js';
 import User from '../models/User.js';
-import { z } from 'zod';
+import Joi from 'joi';
 
 const router = express.Router();
 
@@ -16,10 +16,10 @@ router.get('/users', async (req, res) => {
 
 router.patch('/users/:id/rates', async (req, res) => {
   const { id } = req.params;
-  const bodySchema = z.object({ rate: z.number().min(0), otRate: z.number().min(0) });
-  const parsed = bodySchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: 'Invalid body' });
-  const user = await User.findByIdAndUpdate(id, { rate: parsed.data.rate, otRate: parsed.data.otRate }, { new: true }).select('-passwordHash');
+  const bodySchema = Joi.object({ rate: Joi.number().min(0).required(), otRate: Joi.number().min(0).required() });
+  const { error, value } = bodySchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+  if (error) return res.status(400).json({ error: 'Invalid body', details: error.details });
+  const user = await User.findByIdAndUpdate(id, { rate: value.rate, otRate: value.otRate }, { new: true }).select('-passwordHash');
   res.json({ user });
 });
 
@@ -40,13 +40,13 @@ router.patch('/entries/:id/approve', async (req, res) => {
 
 router.patch('/entries/:id/reject', async (req, res) => {
   const { id } = req.params;
-  const bodySchema = z.object({ comment: z.string().max(1000).optional() });
-  const parsed = bodySchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: 'Invalid body' });
+  const bodySchema = Joi.object({ comment: Joi.string().max(1000).optional() });
+  const { error, value } = bodySchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+  if (error) return res.status(400).json({ error: 'Invalid body', details: error.details });
   const entry = await TimeEntry.findById(id);
   if (!entry) return res.status(404).json({ error: 'Entry not found' });
   entry.status = 'REJECTED';
-  entry.adminComment = parsed.data.comment || '';
+  entry.adminComment = value.comment || '';
   await entry.save();
   res.json({ entry });
 });

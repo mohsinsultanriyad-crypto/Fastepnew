@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { z } from 'zod';
+import Joi from 'joi';
 import User from '../models/User.js';
 import { validateBody } from '../middleware/validate.js';
 import { createLogger } from '../utils/logger.js';
@@ -11,8 +11,8 @@ const logger = createLogger();
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_in_env';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 
-const registerSchema = z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().min(6) });
-const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
+const registerSchema = Joi.object({ name: Joi.string().min(2).required(), email: Joi.string().email().required(), password: Joi.string().min(6).required() });
+const loginSchema = Joi.object({ email: Joi.string().email().required(), password: Joi.string().min(6).required() });
 
 router.post('/register', validateBody(registerSchema), async (req, res) => {
   const { name, email, password } = req.body;
