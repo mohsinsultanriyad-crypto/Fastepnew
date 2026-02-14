@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { createApiClient } from '../src/lib/api';
 import { User, Shift, Announcement, AdvanceRequest } from '../types';
 import { DAYS_IN_MONTH, BASE_HOURS } from '../constants';
 import { Clock, TrendingUp, CheckCircle, Megaphone, Save, Edit3, Lock, Zap, Coffee, Calendar, Wallet, Info, AlertCircle } from 'lucide-react';
@@ -94,26 +95,26 @@ const WorkerDashboard: React.FC<WorkerDashboardProps> = ({ user, shifts, setShif
     const startTime = new Date(new Date(selectedDate).setHours(inH, inM, 0, 0)).getTime();
     const endTime = new Date(new Date(selectedDate).setHours(outH, outM, 0, 0)).getTime();
 
-    const newShift: Shift = {
-      id: selectedShift?.id || Math.random().toString(36).substr(2, 9),
-      workerId: user.id,
-      date: selectedDate,
-      startTime,
-      endTime,
-      breakMinutes: Number(breakMins),
-      notes,
-      status: 'pending',
-      isApproved: false,
-      totalHours: currentBreakdown.total,
-      estimatedEarnings: currentBreakdown.totalEarnings,
-      approvedEarnings: 0
-    };
-
-    setShifts(prev => {
-      const filtered = prev.filter(s => s.id !== newShift.id);
-      return [...filtered, newShift];
-    });
-    setIsEditing(false);
+    (async () => {
+      try {
+        const api = createApiClient();
+        const payload = {
+          date: selectedDate,
+          startTime: inTime,
+          endTime: outTime,
+          breakMinutes: Number(breakMins),
+          notes: notes || ''
+        };
+        await api.post('/api/entries', payload);
+        // refresh list
+        const res = await api.get('/api/entries/my');
+        setShifts(res.data.entries || []);
+        setIsEditing(false);
+      } catch (err) {
+        console.error('Failed to save entry', err);
+        alert(err?.response?.data?.error || 'Failed to save entry');
+      }
+    })();
   };
 
   // ADVANCED EARNINGS CALCULATION

@@ -1,50 +1,43 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Shift, Leave, SitePost, AdvanceRequest, Announcement } from './types';
-import { MOCK_WORKERS, MOCK_ADMIN } from './constants';
 import WorkerApp from './components/WorkerApp';
 import AdminApp from './components/AdminApp';
 import Login from './components/Login';
+import { createApiClient } from './src/lib/api';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [posts, setPosts] = useState<SitePost[]>([]);
-  const [workers, setWorkers] = useState<User[]>(MOCK_WORKERS);
+  const [workers, setWorkers] = useState<User[]>([]);
   const [advanceRequests, setAdvanceRequests] = useState<AdvanceRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Persistence: Load
+  // Load data from backend when a user logs in
   useEffect(() => {
-    const savedShifts = localStorage.getItem('fw_shifts');
-    const savedLeaves = localStorage.getItem('fw_leaves');
-    const savedPosts = localStorage.getItem('fw_posts');
-    const savedWorkers = localStorage.getItem('fw_workers');
-    const savedAdvance = localStorage.getItem('fw_advance');
-    const savedAnnouncements = localStorage.getItem('fw_announcements');
-    
-    if (savedShifts) setShifts(JSON.parse(savedShifts));
-    if (savedLeaves) setLeaves(JSON.parse(savedLeaves));
-    if (savedPosts) setPosts(JSON.parse(savedPosts));
-    if (savedWorkers) setWorkers(JSON.parse(savedWorkers));
-    if (savedAdvance) setAdvanceRequests(JSON.parse(savedAdvance));
-    if (savedAnnouncements) setAnnouncements(JSON.parse(savedAnnouncements));
-    
-    setIsLoaded(true);
-  }, []);
-
-  // Persistence: Save
-  useEffect(() => {
-    if (!isLoaded) return;
-    localStorage.setItem('fw_shifts', JSON.stringify(shifts));
-    localStorage.setItem('fw_leaves', JSON.stringify(leaves));
-    localStorage.setItem('fw_posts', JSON.stringify(posts));
-    localStorage.setItem('fw_workers', JSON.stringify(workers));
-    localStorage.setItem('fw_advance', JSON.stringify(advanceRequests));
-    localStorage.setItem('fw_announcements', JSON.stringify(announcements));
-  }, [isLoaded, shifts, leaves, posts, workers, advanceRequests, announcements]);
+    async function loadForUser(user: User) {
+      try {
+        const api = createApiClient();
+        if (user.role === 'worker') {
+          const res = await api.get('/api/entries/my');
+          setShifts(res.data.entries || []);
+        } else {
+          const u = await api.get('/api/admin/users');
+          setWorkers(u.data.users || []);
+          const e = await api.get('/api/admin/entries?status=PENDING');
+          setShifts(e.data.entries || []);
+        }
+      } catch (err) {
+        console.error('Error loading data for user', err);
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+    if (currentUser) loadForUser(currentUser);
+  }, [currentUser]);
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);

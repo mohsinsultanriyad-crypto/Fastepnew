@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { User, Leave, AdvanceRequest } from '../types';
 import { LEAVE_REASONS } from '../constants';
-import { LogOut, Phone, Briefcase, DollarSign, PlusCircle, ChevronRight, X, CheckCircle, Wallet, History, Database, DownloadCloud, UploadCloud, FileCheck } from 'lucide-react';
+import { LogOut, Phone, Briefcase, DollarSign, PlusCircle, ChevronRight, X, CheckCircle, Wallet, History, Database, DownloadCloud, FileCheck } from 'lucide-react';
+import { createApiClient } from '../src/lib/api';
 
 interface ProfileProps {
   user: User;
@@ -70,37 +71,31 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, leaves, setLeaves, ad
     setTimeout(() => { setShowAdvanceModal(false); setIsSuccess(false); setAdvanceAmount(''); setAdvanceReason(''); }, 1500);
   };
 
-  const backupData = () => {
-    const data = {
-      shifts: localStorage.getItem('fw_shifts'),
-      leaves: localStorage.getItem('fw_leaves'),
-      workers: localStorage.getItem('fw_workers'),
-      advance: localStorage.getItem('fw_advance')
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `FASTEP_Backup_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-  };
-
-  const restoreData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target?.result as string);
-        if (data.shifts) localStorage.setItem('fw_shifts', data.shifts);
-        if (data.leaves) localStorage.setItem('fw_leaves', data.leaves);
-        if (data.workers) localStorage.setItem('fw_workers', data.workers);
-        if (data.advance) localStorage.setItem('fw_advance', data.advance);
-        alert("Restore successful! App will reload.");
-        window.location.reload();
-      } catch (err) { alert("Invalid backup file."); }
-    };
-    reader.readAsText(file);
+  const backupData = async () => {
+    try {
+      const api = createApiClient();
+      const usersRes = await api.get('/api/admin/users');
+      const pending = await api.get('/api/admin/entries?status=PENDING');
+      const approved = await api.get('/api/admin/entries?status=APPROVED');
+      const rejected = await api.get('/api/admin/entries?status=REJECTED');
+      const data = {
+        users: usersRes.data.users || [],
+        entries: {
+          pending: pending.data.entries || [],
+          approved: approved.data.entries || [],
+          rejected: rejected.data.entries || []
+        }
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FASTEP_Backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    } catch (err) {
+      console.error('Backup failed', err);
+      alert('Backup failed: ' + (err?.response?.data?.error || err.message || 'Unknown'));
+    }
   };
 
   const myAdvanceRequests = advanceRequests?.filter(r => r.workerId === user.id) || [];
