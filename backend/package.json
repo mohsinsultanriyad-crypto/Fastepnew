@@ -17,12 +17,12 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.3.1",
     "morgan": "^1.10.0",
-    "zod": "^4.25.0"
+    "zod": "^4.24.9"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   }
 }
