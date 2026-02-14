@@ -1,0 +1,9 @@
+/* Minimal stylesheet to ensure correct MIME type when served */
+:root{--bg:#f9fafb;--muted:#6b7280}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);color:#111827;font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,"Helvetica Neue",Arial}
+/* small helpers used by app */
+.page{padding:1rem}
+.center{display:flex;align-items:center;justify-content:center}
+.card{background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.04);padding:1rem}
+.error{color:#ef4444}

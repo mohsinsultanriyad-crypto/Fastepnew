@@ -10,7 +10,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
-  const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
     try {
       const api = createApiClient();
       const url = '/api/auth/login';
-      const res = await api.post(url, { email: userId, password });
+      const res = await api.post(url, { email, password });
       const { token, user } = res.data;
       if (token) localStorage.setItem('token', token);
       onLogin(user);
@@ -57,13 +57,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1 ml-1">
-                {isAdmin ? 'Admin ID' : 'Worker ID'}
+                {isAdmin ? 'Admin Email' : 'Email'}
               </label>
               <input 
-                type="text" 
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder={isAdmin ? "FSA101" : "FS1001"}
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={isAdmin ? "admin@company.com" : "you@company.com"}
+                required
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all text-sm font-bold"
               />
             </div>
