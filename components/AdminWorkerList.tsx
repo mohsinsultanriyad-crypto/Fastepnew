@@ -113,17 +113,18 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
         // convert to base64 and resize if needed
         photoBase64 = await toBase64Resized(newWorker.photoFile, 300, 300, 0.7);
       }
-      const payload = {
+      const payload: any = {
         name: newWorker.name,
         workerId: newWorker.workerId,
         password: newWorker.password,
-        trade: newWorker.trade,
-        monthlySalary: Number(newWorker.monthlySalary) || 0,
-        phone: newWorker.phone,
-        iqamaExpiry: newWorker.iqamaExpiry,
-        passportExpiry: newWorker.passportExpiry,
-        photoBase64: photoBase64
       };
+      if (newWorker.trade) payload.trade = newWorker.trade;
+      const salaryVal = newWorker.monthlySalary !== '' ? Number(newWorker.monthlySalary) : null;
+      if (salaryVal !== null && !Number.isNaN(salaryVal)) payload.salary = salaryVal;
+      if (newWorker.phone) payload.phone = newWorker.phone;
+      if (newWorker.iqamaExpiry) payload.iqamaExpiry = newWorker.iqamaExpiry;
+      if (newWorker.passportExpiry) payload.passportExpiry = newWorker.passportExpiry;
+      if (photoBase64) payload.photoBase64 = photoBase64;
       const res = await api.post('/api/admin/users', payload);
       // refresh workers
       const list = await api.get('/api/admin/users');

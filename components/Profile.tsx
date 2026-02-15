@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { User, Leave, AdvanceRequest } from '../types';
 import { LEAVE_REASONS } from '../constants';
-import { LogOut, Phone, Briefcase, DollarSign, PlusCircle, ChevronRight, X, CheckCircle, Wallet, History, Database, DownloadCloud, FileCheck } from 'lucide-react';
+import { LogOut, Phone, Briefcase, DollarSign, PlusCircle, ChevronRight, X, CheckCircle, Wallet, History, Database, DownloadCloud, UploadCloud, FileCheck } from 'lucide-react';
 import { createApiClient } from '../src/lib/api';
 
 interface ProfileProps {
@@ -97,6 +97,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, leaves, setLeaves, ad
       alert('Backup failed: ' + (err?.response?.data?.error || err.message || 'Unknown'));
     }
   };
+  };
 
   const myAdvanceRequests = advanceRequests?.filter(r => r.workerId === user.id) || [];
 
@@ -126,7 +127,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, leaves, setLeaves, ad
             <label className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all cursor-pointer">
               <UploadCloud size={24} className="text-orange-600" />
               <span className="text-[10px] font-bold uppercase text-gray-400">Restore</span>
-              <input type="file" accept=".json" onChange={restoreData} className="hidden" />
+              <input type="file" accept=".json" className="hidden" />
             </label>
           </div>
         </div>
