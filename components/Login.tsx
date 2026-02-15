@@ -33,7 +33,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
       }
       onLogin(res.data.user);
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Login failed');
+      console.error('Login error response', err?.response?.data || err.message || err);
+      const detail = err?.response?.data || { error: err?.message || 'Login failed' };
+      setError(typeof detail === 'string' ? detail : (detail.error || JSON.stringify(detail)));
     }
   };
 
