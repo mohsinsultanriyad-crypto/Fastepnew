@@ -133,8 +133,9 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
       setNewWorker({ name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: '', photoFile: null, photoPreview: '' });
     } catch (err: any) {
       console.error('Failed to create worker', err);
-      const detail = err?.response?.data || err.message || 'Failed to create worker';
-      alert(typeof detail === 'object' ? JSON.stringify(detail, null, 2) : String(detail));
+      const resp = err?.response?.data;
+      const detail = resp?.error || resp?.message || (resp ? JSON.stringify(resp, null, 2) : null) || err.message || 'Failed to create worker';
+      alert(String(detail));
     }
   };
 
