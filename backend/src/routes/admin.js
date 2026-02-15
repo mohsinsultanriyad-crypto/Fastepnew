@@ -14,6 +14,24 @@ router.get('/users', async (req, res) => {
   res.json({ users });
 });
 
+// Create a new worker profile (admin only)
+router.post('/users', async (req, res) => {
+  const schema = Joi.object({ name: Joi.string().required(), workerId: Joi.string().required(), password: Joi.string().min(3).required(), trade: Joi.string().optional(), monthlySalary: Joi.number().optional(), phone: Joi.string().optional(), iqamaExpiry: Joi.string().optional(), passportExpiry: Joi.string().optional(), photoBase64: Joi.string().optional() });
+  const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
+  if (error) return res.status(400).json({ error: 'Invalid body', details: error.details });
+  try {
+    const existing = await User.findOne({ $or: [{ workerId: value.workerId }, { email: value.email }] });
+    if (existing) return res.status(400).json({ error: 'WorkerId or email already exists' });
+    const passwordHash = await require('bcryptjs').hash(value.password, 10);
+    const user = await User.create({ name: value.name, workerId: value.workerId, passwordHash, role: 'worker', trade: value.trade || '', monthlySalary: value.monthlySalary || 0, phone: value.phone || '', iqamaExpiry: value.iqamaExpiry || '', passportExpiry: value.passportExpiry || '', photoBase64: value.photoBase64 || '' });
+    const out = await User.findById(user._id).select('-passwordHash');
+    res.json({ user: out });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.patch('/users/:id/rates', async (req, res) => {
   const { id } = req.params;
   const bodySchema = Joi.object({ rate: Joi.number().min(0).required(), otRate: Joi.number().min(0).required() });

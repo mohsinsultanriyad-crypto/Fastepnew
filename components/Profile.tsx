@@ -104,7 +104,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, leaves, setLeaves, ad
     <div className="px-6 pt-10 pb-6 space-y-8">
       <header className="flex flex-col items-center gap-4">
         <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden">
-          <img src={user.photoUrl} alt="profile" className="w-full h-full object-cover" />
+          <img src={(user as any).photoBase64 ? (user as any).photoBase64 : user.photoUrl} alt="profile" className="w-full h-full object-cover" />
         </div>
         <div className="text-center">
           <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>

@@ -163,7 +163,7 @@ const WorkerDashboard: React.FC<WorkerDashboardProps> = ({ user, shifts, setShif
           <h1 className="text-2xl font-bold text-gray-900">Hello, {user.name.split(' ')[0]}</h1>
         </div>
         <div className="h-10 w-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-          <img src={user.photoUrl} alt="profile" className="h-full w-full object-cover" />
+          <img src={(user as any).photoBase64 ? (user as any).photoBase64 : user.photoUrl} alt="profile" className="h-full w-full object-cover" />
         </div>
       </header>
 

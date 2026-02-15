@@ -10,7 +10,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
-  const [email, setEmail] = useState('');
+  const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState('');
@@ -21,10 +21,17 @@ const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
     try {
       const api = createApiClient();
       const url = '/api/auth/login';
-      const res = await api.post(url, { email, password });
+      const payload: any = { password };
+      if (isAdmin) payload.adminId = id; else payload.workerId = id;
+      const res = await api.post(url, payload);
       const { token, user } = res.data;
-      if (token) localStorage.setItem('token', token);
-      onLogin(user);
+      if (token) {
+        localStorage.setItem('token', token);
+        // store minimal user
+        const minUser = { id: user.id, name: user.name, role: user.role, workerId: user.workerId, adminId: user.adminId, photoBase64: user.photoBase64, monthlySalary: user.monthlySalary || 0 };
+        localStorage.setItem('user', JSON.stringify(minUser));
+      }
+      onLogin(res.data.user);
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Login failed');
     }
@@ -57,13 +64,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1 ml-1">
-                {isAdmin ? 'Admin Email' : 'Email'}
+                {isAdmin ? 'Admin ID' : 'Worker ID'}
               </label>
               <input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={isAdmin ? "admin@company.com" : "you@company.com"}
+                type="text" 
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                placeholder={isAdmin ? "ADMIN" : "FS1001"}
                 required
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all text-sm font-bold"
               />

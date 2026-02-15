@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change_this_in_env';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 
 const registerSchema = Joi.object({ name: Joi.string().min(2).required(), email: Joi.string().email().required(), password: Joi.string().min(6).required() });
-const loginSchema = Joi.object({ email: Joi.string().email().required(), password: Joi.string().min(6).required() });
+const loginSchema = Joi.object({ email: Joi.string().email().optional(), workerId: Joi.string().optional(), adminId: Joi.string().optional(), password: Joi.string().min(3).required() });
 
 router.post('/register', validateBody(registerSchema), async (req, res) => {
   const { name, email, password } = req.body;
@@ -35,14 +35,28 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
 });
 
 router.post('/login', validateBody(loginSchema), async (req, res) => {
-  const { email, password } = req.body;
+  const { email, workerId, adminId, password } = req.body;
   try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    let user = null;
+    if (workerId) {
+      user = await User.findOne({ workerId });
+      if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+      if (user.role !== 'worker') return res.status(403).json({ error: 'Not a worker account' });
+    } else if (adminId) {
+      user = await User.findOne({ adminId });
+      if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+      if (user.role !== 'admin') return res.status(403).json({ error: 'Not an admin account' });
+    } else if (email) {
+      user = await User.findOne({ email });
+      if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    } else {
+      return res.status(400).json({ error: 'Provide workerId or adminId' });
+    }
+
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ sub: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    return res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, rate: user.rate, otRate: user.otRate } });
+    return res.json({ token, user: { id: user._id, name: user.name, email: user.email, workerId: user.workerId, adminId: user.adminId, role: user.role, rate: user.rate, otRate: user.otRate, photoBase64: user.photoBase64 } });
   } catch (err) {
     logger.error('Login error', err);
     return res.status(500).json({ error: 'Server error' });

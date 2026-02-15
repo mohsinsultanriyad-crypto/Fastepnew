@@ -179,7 +179,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div key={s.id} className="bg-white p-5 rounded-[2rem] border-2 border-blue-50 shadow-sm space-y-3">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                      <img src={worker?.photoUrl} className="w-8 h-8 rounded-lg object-cover" alt="" />
+                      <img src={(worker as any)?.photoBase64 ? (worker as any).photoBase64 : worker?.photoUrl} className="w-8 h-8 rounded-lg object-cover" alt="" />
                       <div>
                         <h4 className="text-sm font-bold text-gray-900">{worker?.name}</h4>
                         <p className="text-[10px] text-gray-400 font-bold">{s.date}</p>
@@ -315,7 +315,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
               {presentWorkers.length > 0 ? presentWorkers.map(({ worker, shift }) => (
                 <div key={shift.id} className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                  <div className="w-10 h-10 rounded-xl bg-gray-200 overflow-hidden"><img src={worker?.photoUrl} className="w-full h-full object-cover" /></div>
+                  <div className="w-10 h-10 rounded-xl bg-gray-200 overflow-hidden"><img src={(worker as any)?.photoBase64 ? (worker as any).photoBase64 : worker?.photoUrl} className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <p className="text-sm font-bold text-gray-900">{worker?.name}</p>
                     <p className="text-[9px] text-blue-600 font-bold uppercase">{worker?.trade}</p>

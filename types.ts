@@ -11,6 +11,7 @@ export interface User {
   monthlySalary: number;
   phone: string;
   photoUrl: string;
+  photoBase64?: string;
   password?: string;
   isActive: boolean;
   iqamaExpiry?: string;

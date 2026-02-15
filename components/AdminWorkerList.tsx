@@ -23,7 +23,7 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
   const [searchQuery, setSearchQuery] = useState('');
 
   const [newWorker, setNewWorker] = useState({
-    name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: ''
+    name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: '', photoFile: null as File | null, photoPreview: ''
   });
 
   const filteredWorkers = useMemo(() => {
@@ -102,25 +102,74 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
     }
   };
 
-  const handleCreateWorker = (e: React.FormEvent) => {
+  const handleCreateWorker = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newWorker.name,
-      workerId: newWorker.workerId,
-      trade: newWorker.trade,
-      monthlySalary: Number(newWorker.monthlySalary),
-      phone: newWorker.phone,
-      password: newWorker.password,
-      role: 'worker',
-      photoUrl: `https://picsum.photos/seed/${newWorker.workerId}/200`,
-      isActive: true,
-      iqamaExpiry: newWorker.iqamaExpiry,
-      passportExpiry: newWorker.passportExpiry
-    };
-    setWorkers(prev => [...prev, newUser]);
-    setShowAddModal(false);
-    setNewWorker({ name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: '' });
+    try {
+      const api = createApiClient();
+      // prepare payload
+      let photoBase64 = '';
+      if (newWorker.photoFile) {
+        // convert to base64 and resize if needed
+        photoBase64 = await toBase64Resized(newWorker.photoFile, 300, 300, 0.7);
+      }
+      const payload = {
+        name: newWorker.name,
+        workerId: newWorker.workerId,
+        password: newWorker.password,
+        trade: newWorker.trade,
+        monthlySalary: Number(newWorker.monthlySalary) || 0,
+        phone: newWorker.phone,
+        iqamaExpiry: newWorker.iqamaExpiry,
+        passportExpiry: newWorker.passportExpiry,
+        photoBase64: photoBase64
+      };
+      const res = await api.post('/api/admin/users', payload);
+      // refresh workers
+      const list = await api.get('/api/admin/users');
+      setWorkers(list.data.users || []);
+      setShowAddModal(false);
+      setNewWorker({ name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: '', photoFile: null, photoPreview: '' });
+    } catch (err) {
+      console.error('Failed to create worker', err);
+      alert(err?.response?.data?.error || 'Failed to create worker');
+    }
+  };
+
+  // helper: convert file to base64 resized via canvas
+  const toBase64Resized = (file: File, maxW: number, maxH: number, quality = 0.7) => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxW || h > maxH) {
+            const ratio = Math.min(maxW / w, maxH / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve('');
+          ctx.drawImage(img, 0, 0, w, h);
+          const data = canvas.toDataURL('image/jpeg', quality);
+          // ensure size <= ~200KB; if larger, reduce quality
+          if (data.length > 200 * 1024) {
+            // try lowering quality
+            const smaller = canvas.toDataURL('image/jpeg', 0.6);
+            return resolve(smaller);
+          }
+          resolve(data);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   return (
@@ -153,8 +202,8 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
             <div key={worker.id} className={`bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm space-y-5 ${!worker.isActive ? 'opacity-60 grayscale' : ''}`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gray-50 overflow-hidden shadow-inner">
-                    <img src={worker.photoUrl} className="w-full h-full object-cover" alt={worker.name} />
+                      <div className="w-14 h-14 rounded-2xl bg-gray-50 overflow-hidden shadow-inner">
+                        <img src={worker.photoBase64 ? worker.photoBase64 : worker.photoUrl} className="w-full h-full object-cover" alt={worker.name} />
                   </div>
                   <div>
                     <h4 className="text-base font-bold text-gray-900">{worker.name}</h4>
@@ -319,12 +368,22 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
             <button onClick={() => setShowAddModal(false)} className="p-3 bg-gray-50 text-gray-400 rounded-full"><X size={24} /></button>
           </div>
           <form onSubmit={handleCreateWorker} className="flex-1 p-6 space-y-6 pb-24">
-            <div className="space-y-4">
+              <div className="space-y-4">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Identity Details</label>
               <input required value={newWorker.name} onChange={e => setNewWorker({...newWorker, name: e.target.value})} type="text" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Full Name" />
               <div className="grid grid-cols-2 gap-4">
                 <input required value={newWorker.workerId} onChange={e => setNewWorker({...newWorker, workerId: e.target.value})} type="text" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="FS1001" />
                 <input required value={newWorker.password} onChange={e => setNewWorker({...newWorker, password: e.target.value})} type="text" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Pass123" />
+              </div>
+              <div className="mt-2">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Photo (optional)</label>
+                <input type="file" accept="image/*" onChange={e => {
+                  const f = e.target.files?.[0] || null;
+                  if (f) {
+                    setNewWorker(prev => ({ ...prev, photoFile: f, photoPreview: URL.createObjectURL(f) }));
+                  }
+                }} className="w-full" />
+                {newWorker.photoPreview && <div className="w-24 h-24 mt-2 overflow-hidden rounded-lg"><img src={newWorker.photoPreview} className="w-full h-full object-cover" /></div>}
               </div>
             </div>
             <div className="space-y-4">

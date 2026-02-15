@@ -15,6 +15,16 @@ const App: React.FC = () => {
   const [advanceRequests, setAdvanceRequests] = useState<AdvanceRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  // Restore session from localStorage
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      if (token && user) {
+        setCurrentUser(JSON.parse(user));
+      }
+    } catch (e) {}
+  }, []);
 
   // Load data from backend when a user logs in
   useEffect(() => {
