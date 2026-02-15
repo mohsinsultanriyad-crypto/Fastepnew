@@ -97,7 +97,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, leaves, setLeaves, ad
       alert('Backup failed: ' + (err?.response?.data?.error || err.message || 'Unknown'));
     }
   };
-  };
 
   const myAdvanceRequests = advanceRequests?.filter(r => r.workerId === user.id) || [];
 
