@@ -3,6 +3,7 @@ import { authRequired, adminRequired } from '../middleware/auth.js';
 import TimeEntry from '../models/TimeEntry.js';
 import User from '../models/User.js';
 import Joi from 'joi';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
@@ -20,9 +21,9 @@ router.post('/users', async (req, res) => {
   const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
   if (error) return res.status(400).json({ error: 'Invalid body', details: error.details });
   try {
-    const existing = await User.findOne({ $or: [{ workerId: value.workerId }, { email: value.email }] });
-    if (existing) return res.status(400).json({ error: 'WorkerId or email already exists' });
-    const passwordHash = await require('bcryptjs').hash(value.password, 10);
+    const existing = await User.findOne({ workerId: value.workerId });
+    if (existing) return res.status(400).json({ error: 'WorkerId already exists' });
+    const passwordHash = await bcrypt.hash(value.password, 10);
     const user = await User.create({ name: value.name, workerId: value.workerId, passwordHash, role: 'worker', trade: value.trade || '', monthlySalary: value.monthlySalary || 0, phone: value.phone || '', iqamaExpiry: value.iqamaExpiry || '', passportExpiry: value.passportExpiry || '', photoBase64: value.photoBase64 || '' });
     const out = await User.findById(user._id).select('-passwordHash');
     res.json({ user: out });
@@ -43,7 +44,7 @@ router.patch('/users/:id/rates', async (req, res) => {
 
 router.get('/entries', async (req, res) => {
   const status = req.query.status || 'PENDING';
-  const entries = await TimeEntry.find({ status }).populate('userId', 'name email rate otRate').sort({ createdAt: -1 });
+  const entries = await TimeEntry.find({ status }).populate('userId', 'name rate otRate').sort({ createdAt: -1 });
   res.json({ entries });
 });
 
