@@ -17,19 +17,51 @@ router.get('/users', async (req, res) => {
 
 // Create a new worker profile (admin only)
 router.post('/users', async (req, res) => {
-  const schema = Joi.object({ name: Joi.string().required(), workerId: Joi.string().required(), password: Joi.string().min(3).required(), trade: Joi.string().optional(), monthlySalary: Joi.number().optional(), phone: Joi.string().optional(), iqamaExpiry: Joi.string().optional(), passportExpiry: Joi.string().optional(), photoBase64: Joi.string().optional() });
-  const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
-  if (error) return res.status(400).json({ error: 'Invalid body', details: error.details });
   try {
-    const existing = await User.findOne({ workerId: value.workerId });
-    if (existing) return res.status(400).json({ error: 'WorkerId already exists' });
-    const passwordHash = await bcrypt.hash(value.password, 10);
-    const user = await User.create({ name: value.name, workerId: value.workerId, passwordHash, role: 'worker', trade: value.trade || '', monthlySalary: value.monthlySalary || 0, phone: value.phone || '', iqamaExpiry: value.iqamaExpiry || '', passportExpiry: value.passportExpiry || '', photoBase64: value.photoBase64 || '' });
+    const {
+      name,
+      workerId,
+      password,
+      trade,
+      phone,
+      salary,
+      iqamaExpiry,
+      passportExpiry,
+      photoBase64
+    } = req.body || {};
+
+    if (!name || !workerId || !password) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const existing = await User.findOne({ workerId });
+    if (existing) {
+      return res.status(400).json({ error: 'Worker ID already exists' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      workerId,
+      passwordHash,
+      role: 'worker',
+      trade: trade || undefined,
+      phone: phone || undefined,
+      salary: typeof salary === 'number' ? salary : (salary ? Number(salary) : 0),
+      iqamaExpiry: iqamaExpiry ? new Date(iqamaExpiry) : undefined,
+      passportExpiry: passportExpiry ? new Date(passportExpiry) : undefined,
+      photoBase64: photoBase64 || undefined
+    });
+
     const out = await User.findById(user._id).select('-passwordHash');
-    res.json({ user: out });
+    return res.status(201).json({ user: out });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Create worker error:', err);
+    if (err && (err.code === 11000 || err.name === 'MongoServerError')) {
+      return res.status(400).json({ error: 'Worker ID already exists' });
+    }
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 

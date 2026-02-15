@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'worker'], default: 'worker' },
   rate: { type: Number, default: 0 },
   otRate: { type: Number, default: 0 },
+  trade: { type: String, required: false, default: '' },
+  phone: { type: String, required: false, default: '' },
+  salary: { type: Number, required: false, default: 0 },
+  iqamaExpiry: { type: Date, required: false },
+  passportExpiry: { type: Date, required: false },
   photoBase64: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
