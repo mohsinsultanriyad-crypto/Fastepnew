@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { createApiClient } from '../src/lib/api';
 import { User, Shift, Leave, AdvanceRequest } from '../types';
 import { Search, Download, FileText, Edit2, X, CheckCircle, Loader2, History, UserPlus, Lock, ShieldCheck, ShieldAlert, Zap, AlertTriangle, Trash2, AlertCircle } from 'lucide-react';
 import { DAYS_IN_MONTH, BASE_HOURS } from '../constants';
