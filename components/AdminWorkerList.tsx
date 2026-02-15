@@ -125,6 +125,7 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
       if (newWorker.iqamaExpiry) payload.iqamaExpiry = newWorker.iqamaExpiry;
       if (newWorker.passportExpiry) payload.passportExpiry = newWorker.passportExpiry;
       if (photoBase64) payload.photoBase64 = photoBase64;
+      console.log('create worker payload', payload);
       const res = await api.post('/api/admin/users', payload);
       // refresh workers
       const list = await api.get('/api/admin/users');
@@ -405,10 +406,10 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
             </div>
             <div className="space-y-4">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Professional Details</label>
-              <input required value={newWorker.trade} onChange={e => setNewWorker({...newWorker, trade: e.target.value})} type="text" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Trade (e.g. Mason)" />
+              <input value={newWorker.trade} onChange={e => setNewWorker({...newWorker, trade: e.target.value})} type="text" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Trade (e.g. Mason)" />
               <div className="grid grid-cols-2 gap-4">
-                <input required value={newWorker.monthlySalary} onChange={e => setNewWorker({...newWorker, monthlySalary: e.target.value})} type="number" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Salary (SAR)" />
-                <input required value={newWorker.phone} onChange={e => setNewWorker({...newWorker, phone: e.target.value})} type="tel" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Phone" />
+                <input value={newWorker.monthlySalary} onChange={e => setNewWorker({...newWorker, monthlySalary: e.target.value})} type="number" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Salary (SAR)" />
+                <input value={newWorker.phone} onChange={e => setNewWorker({...newWorker, phone: e.target.value})} type="tel" className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-bold" placeholder="Phone" />
               </div>
             </div>
             <button type="submit" className="w-full bg-blue-600 text-white font-bold py-5 rounded-3xl shadow-xl shadow-blue-100 active:scale-95 transition-all mt-4">Create Worker Profile</button>
