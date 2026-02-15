@@ -8,6 +8,8 @@ import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth.js';
 import entriesRoutes from './routes/entries.js';
 import adminRoutes from './routes/admin.js';
+import User from './models/User.js';
+import bcrypt from 'bcryptjs';
 import { createLogger } from './utils/logger.js';
 import { getCorsOptions } from './config.js';
 
@@ -44,9 +46,27 @@ mongoose
   .connect(MONGODB_URI, { dbName: process.env.DB_NAME || undefined })
   .then(() => {
     logger.info('Connected to MongoDB');
-    app.listen(PORT, '0.0.0.0', () => {
-      logger.info(`Server running on port ${PORT}`);
-    });
+    (async () => {
+      // Ensure single admin exists
+      try {
+        const ADMIN_ID = 'FASTEP121';
+        const ADMIN_PWD = 'password123';
+        const existing = await User.findOne({ adminId: ADMIN_ID });
+        if (!existing) {
+          const hash = await bcrypt.hash(ADMIN_PWD, 10);
+          await User.create({ name: 'Admin', adminId: ADMIN_ID, passwordHash: hash, role: 'admin', rate: 0, otRate: 0 });
+          logger.info('Created default admin', ADMIN_ID);
+        } else {
+          logger.info('Default admin exists');
+        }
+      } catch (err) {
+        logger.error('Error ensuring admin user', err);
+      }
+
+      app.listen(PORT, '0.0.0.0', () => {
+        logger.info(`Server running on port ${PORT}`);
+      });
+    })();
   })
   .catch((err) => {
     logger.error('Mongo connection error', err);
