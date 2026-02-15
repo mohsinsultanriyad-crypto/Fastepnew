@@ -130,9 +130,10 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
       setWorkers(list.data.users || []);
       setShowAddModal(false);
       setNewWorker({ name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: '', photoFile: null, photoPreview: '' });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create worker', err);
-      alert(err?.response?.data?.error || 'Failed to create worker');
+      const detail = err?.response?.data || err.message || 'Failed to create worker';
+      alert(typeof detail === 'object' ? JSON.stringify(detail, null, 2) : String(detail));
     }
   };
 
